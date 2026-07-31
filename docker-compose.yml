@@ -44,7 +44,7 @@ services:
     # Sobreescribe las variables de application.properties al volar
     # Nota: Dentro de Docker se usa el puerto interno 5432 y el nombre del servicio 'postgres'
     environment:
-      - #OJOOOOOOOOOOOOO Es mejor .env + .gitignore
+      #OJOOOOOOOOOOOOO Es mejor .env + .gitignore
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ticketfu_db
       - SPRING_DATASOURCE_USERNAME=ticketfu_user
       - SPRING_DATASOURCE_PASSWORD=1234
