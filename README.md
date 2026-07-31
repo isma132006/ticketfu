@@ -121,7 +121,7 @@ Antes de ejecutar el proyecto necesitas:
 ## 1. Clonar repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/ticketfu.git
+git clone https://github.com/isma132006/ticketfu.git
 
 cd ticketfu
 ```
