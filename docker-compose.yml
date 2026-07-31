@@ -1,0 +1,59 @@
+# Services define las aplicaciones o servicios que docker levantara.
+services:
+
+  # Nombre del servicio de base de datos
+  postgres:
+    # Usamos la imagen para Descargar PostgreSQL 16, sobre alpine
+    image: postgres:16-alpine # se usa Alpine por ser una versión ligera y sergura
+    # El nombre del contenedor en la terminal
+    container_name: ticketfu-db
+    # Son las variables de entorno.(credenciales)
+    environment:
+      POSTGRES_DB: ticketfu_db
+      POSTGRES_USER: ticketfu_user
+    #OJOOOOOOOOOOOOO Es mejor .env + .gitignore
+      POSTGRES_PASSWORD: 1234
+    # se usa el puerto 5433 para evitar conflictos,
+    # LI se abre en el sistema op real
+    ports:
+      - "5433:5432" # Mapea el puerto 5433 de tu máquina al puerto 5432 del contenedor
+    # Los conteiner son desechables, es por eos que
+    # se usa Volumen(...) para conectar un disco duro externo virtual y
+    # guarda los datos fisicos de la db en el disco
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Revisa internamente si la BD ya esta lista para recibir peticiones
+    # evita que Spring intente conectarse antes de tiempo y truque al arrancar
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketfu_user -d ticketfu_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Nombre del servicio de la API de Spring Boot
+  api-app:
+    # Le dice a Dockerfile que construya la imagen desde la raiz del proyecto
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # El nombre del contenedor de Spring Boot en la terminal
+    container_name: ticketfu-api
+    # Mapea el puerto 8080 del contenedor al puerto 8080 de tu sistema op real
+    ports:
+      - "8080:8080"
+    # Sobreescribe las variables de application.properties al volar
+    # Nota: Dentro de Docker se usa el puerto interno 5432 y el nombre del servicio 'postgres'
+    environment:
+      - #OJOOOOOOOOOOOOO Es mejor .env + .gitignore
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ticketfu_db
+      - SPRING_DATASOURCE_USERNAME=ticketfu_user
+      - SPRING_DATASOURCE_PASSWORD=1234
+      # Clave secreta del JWT para no dejarla escrita en duro en el codigo
+      - APPLICATION_SECURITY_JWT_SECRET_KEY=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    # Le dice a la API que se aguante a arrancar hasta que postgres responda que esta 100% listo
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data: # Esto evita que tus datos se borren al apagar el contenedor asi estaba antes
