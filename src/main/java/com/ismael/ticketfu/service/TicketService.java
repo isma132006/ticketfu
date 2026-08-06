@@ -78,7 +78,7 @@ public class TicketService {
     @Transactional
     public void delete(Long id){
         if (id== null){
-            throw  new IllegalArgumentException("EL id esta vacia");
+            throw  new IllegalArgumentException("El id esta vacia");
         }
         if(!ticketRepository.existsById(id)){
             throw  new ResourceNotFoundException("No existe el ticket con ese ID");
@@ -129,6 +129,7 @@ public class TicketService {
         Ticket ticket = new Ticket();
         ticket.setEvent(evento);
         ticket.setUser(user);
+        //GEN A QR RANDOM
         ticket.setQrCode(UUID.randomUUID().toString());
         ticket.setTicketStatus(TicketStatus.PURCHASED);
 

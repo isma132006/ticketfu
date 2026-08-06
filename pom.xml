@@ -135,8 +135,31 @@
 			<version>2.8.5</version>
 		</dependency>
 
+		<!--para Junit 5 que agrupa los componentes principales -->
+		<!--Framework para ejecutar pruebas, estructura de tests y metodos -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.10.0</version>
+			<scope>test</scope>
+		</dependency>
 
-	</dependencies>
+		<!-- Dependencia de Mockito para JUnit 5 -->
+		<!--Biblioteca para simular obj Complejos o externos, Depen reales pro flasas Mocks -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>5.12.0</version>
+			<scope>test</scope>
+		</dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.23.0</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
