@@ -21,4 +21,9 @@ public class Category {
     @NotBlank(message = "La descripción no puede estar vacía")
     private String description;
 
+    public Category(long l, String conciertos, String músicaEnVivo) {
+    }
+    public Category(){
+
+    }
 }

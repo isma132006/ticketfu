@@ -17,6 +17,9 @@ public class TicketQrService {
 
     @Transactional
     public byte[] generateQRCodeImage(String text, int width, int height) throws WriterException, IOException {
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("El texto no puede ser nulo o vacío");
+        }
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height);
         ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();

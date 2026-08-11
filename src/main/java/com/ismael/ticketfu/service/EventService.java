@@ -33,7 +33,7 @@ public class EventService {
 
         Long categoryId = event.getCategory().getId();
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("No existe la categoría con id: " + categoryId));
+                .orElseThrow(() -> new IllegalArgumentException("No existe la categoría con id: " + categoryId));
 
         event.setCategory(category); // Inyectamos la entidad real cargada de la BD
 

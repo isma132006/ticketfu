@@ -2,6 +2,7 @@ package com.ismael.ticketfu.service;
 
 import com.ismael.ticketfu.dto.request.PurchaseTicketRequest;
 import com.ismael.ticketfu.dto.response.TicketResponse;
+import com.ismael.ticketfu.dto.response.TicketValidationResponse;
 import com.ismael.ticketfu.entity.*;
 import com.ismael.ticketfu.exception.ResourceNotFoundException;
 import com.ismael.ticketfu.repository.EventRepository;
@@ -23,6 +24,8 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -257,6 +260,7 @@ public class TicketServiceTest {
     // Tests para Update()
     // ==============================================
 
+    @Test
     void shouldUpdateTicketSuccessfully(){
         //arrange
         Ticket ticket = new Ticket();
@@ -304,7 +308,50 @@ public class TicketServiceTest {
     }
 
     //update con id o tickte nulls
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenUpdateIdOrTicketAreNull(){
+        //arrance
+        Ticket ticket = null;
+        Long id = null;
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> ticketService.update(id, ticket)
+                );
+
+        //assert
+
+        assertEquals("Los parámetros no pueden ser nulos", exception.getMessage());
+
+        verify(ticketRepository, never()).save(any());
+        verify(ticketRepository,never()).findById(anyLong());
+    }
+
     //update con el id no found
+    @Test
+    void ShouldThrowResourceNotFoundExceptionWhenUpdateNotFindId(){
+        // Arrange
+        Ticket ticket = new Ticket();
+        ticket.setQrCode("QR-12345");
+        ticket.setId(1L);
+        // Act
+        when(ticketRepository.findById(ticket.getId()))
+                .thenReturn(Optional.empty());
+        //guarda la ex
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> ticketService.update(ticket.getId(), ticket)
+                );
+
+        assertEquals("Ticket no encontrado con id: " + ticket.getId(), exception.getMessage());
+
+        verify(ticketRepository, times(1))
+                .findById(ticket.getId());
+        verify(ticketRepository, never())
+                .save(any(Ticket.class));
+    }
 
 
     // ===============================================
@@ -368,5 +415,282 @@ public class TicketServiceTest {
         verify(ticketRepository, never())
                 .deleteById(anyLong());
     }
+    // ===============================================
+    // Tests para createALl()
+    // ==============================================
+
+    //todo okey :)
+    @Test
+    void shouldCreateAllTicketsSuccessfully(){
+        //arrage
+        List<Ticket> tickets = new ArrayList<>();
+
+        Ticket ticket1 = new Ticket();
+        ticket1.setQrCode("QR-1");
+
+        Ticket ticket2 = new Ticket();
+        ticket2.setQrCode("QR-2");
+
+        tickets.add(ticket1);
+        tickets.add(ticket2);
+
+        //config del mocj
+        when(ticketRepository.saveAll(tickets))
+                .thenReturn(tickets);
+
+        //act
+        //metod
+        List<Ticket> nuevos= ticketService.createAll(tickets);
+
+
+
+        //assert
+        assertEquals(2,nuevos.size());
+        verify(ticketRepository, times(1)).saveAll(tickets);
+        assertNotNull(nuevos);
+
+    }
+
+    //when tickets == nulls
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenTicketListIsNull(){
+        //arrange
+        List<Ticket> tickets = null;
+
+        //act
+        //guarda la ex
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> ticketService.createAll(tickets)
+                );
+
+        //assert
+        assertEquals("La lista de ticketos no puede estar vacía", exception.getMessage());
+        verify(ticketRepository, never())
+                .saveAll(any(List.class));
+
+
+    }
+    //when tickers.isEmpty
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenTicketListIsEmpty(){
+        //arrange
+        List<Ticket> tickets = new ArrayList<>();
+        //guarda la ex
+        //act
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> ticketService.createAll(tickets)
+                );
+
+        //assert
+
+        assertEquals("La lista de ticketos no puede estar vacía", exception.getMessage());
+        verify(ticketRepository, never())
+                .saveAll(any(List.class));
+    }
+
+    //==============================
+// cancelTicket()
+//==============================
+
+    // cancelar correctamente
+    @Test
+    void shouldCancelTicketSuccessfully() {
+
+        // Arrange
+        Event event = new Event();
+        event.setAvailableTickets(50);
+
+        Ticket ticket = new Ticket();
+        ticket.setId(1L);
+        ticket.setTicketStatus(TicketStatus.PURCHASED);
+        ticket.setEvent(event);
+
+        when(ticketRepository.findById(ticket.getId()))
+                .thenReturn(Optional.of(ticket));
+
+        when(ticketRepository.save(any(Ticket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        TicketValidationResponse resultado =
+                ticketService.cancelTicket(ticket.getId());
+
+        // Assert
+        assertTrue(resultado.isValid());
+        assertEquals("Boleto cancelado con exito", resultado.getMessage());
+
+        assertEquals(TicketStatus.CANCELLED, ticket.getTicketStatus());
+        assertEquals(51, event.getAvailableTickets());
+
+        verify(ticketRepository, times(1))
+                .findById(ticket.getId());
+
+        verify(ticketRepository, times(1))
+                .save(ticket);
+
+        verify(eventRepository, times(1))
+                .save(event);
+    }
+
+    // id == null
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenCancelTicketIdIsNull() {
+
+        // Arrange
+        Long id = null;
+
+        // Act
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> ticketService.cancelTicket(id)
+                );
+
+        // Assert
+        assertEquals("El id del ticket no puede  estar vacío",
+                exception.getMessage());
+
+        verify(ticketRepository, never()).findById(anyLong());
+    }
+
+    // ticket no existe
+    void shouldThrowResourceNotFoundExceptionWhenTicketToCancelDoesNotExist(){}
+
+    // ticket ya fue usado
+    void shouldReturnFalseWhenTicketHasAlreadyBeenUsed(){}
+
+    // ticket ya estaba cancelado
+    void shouldReturnFalseWhenTicketHasAlreadyBeenCancelled(){}
+
+//==============================
+// getTicket()
+//==============================
+
+    // obtener ticket correctamente
+    @Test
+    void shouldGetTicketSuccessfully() {
+
+        // Arrange
+        Ticket ticket = new Ticket();
+        ticket.setId(1L);
+        ticket.setQrCode("QR-12345");
+
+        when(ticketRepository.findById(ticket.getId()))
+                .thenReturn(Optional.of(ticket));
+
+        // Act
+        Ticket resultado =  ticketService.getById(ticket.getId());
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(ticket.getQrCode(), resultado.getQrCode());
+
+        verify(ticketRepository, times(1))
+                .findById(ticket.getId());
+    }
+
+    // ticket no existe
+    @Test
+    void shouldThrowResourceNotFoundExceptionWhenGettingTicketDoesNotExist() {
+
+        // Arrange
+        Long id = 1L;
+
+        when(ticketRepository.findById(id))
+                .thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception =
+                assertThrows(
+                        ResourceNotFoundException.class,
+                        () -> ticketService.getTicket(id)
+                );
+
+        // Assert
+        assertEquals("No existe el ticket con id: " + id,
+                exception.getMessage());
+
+        verify(ticketRepository, times(1))
+                .findById(id);
+
+        verify(ticketRepository, never())
+                .save(any());
+    }
+
+//==============================
+// validateQr()
+//==============================
+
+    // QR válido
+    @Test
+    void shouldValidateQrSuccessfully(){
+
+        //Arrange
+        Ticket ticket = new Ticket();
+        ticket.setQrCode("QR-12345");
+        ticket.setTicketStatus(TicketStatus.PURCHASED);
+
+        when(ticketRepository.findByQrCode(ticket.getQrCode()))
+                .thenReturn(Optional.of(ticket));
+
+        when(ticketRepository.save(any(Ticket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        //Act
+        TicketValidationResponse resultado =
+                ticketService.validateQr(ticket.getQrCode());
+
+        //Assert
+        assertTrue(resultado.isValid());
+        assertEquals("Acceso permitido", resultado.getMessage());
+        assertEquals(TicketStatus.USED, ticket.getTicketStatus());
+
+        verify(ticketRepository, times(1))
+                .findByQrCode(ticket.getQrCode());
+
+        verify(ticketRepository, times(1))
+                .save(ticket);
+    }
+
+    // QR == null
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenQrCodeIsNull(){
+
+        //Arrange
+        String qr = null;
+
+        //Act
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> ticketService.validateQr(qr)
+                );
+
+        //Assert
+        assertEquals("El código QR no puede estar vacío",
+                exception.getMessage());
+
+        verify(ticketRepository, never())
+                .findByQrCode(any());
+
+        verify(ticketRepository, never())
+                .save(any());
+    }
+
+    // QR vacío ""
+    void shouldThrowIllegalArgumentExceptionWhenQrCodeIsEmpty(){}
+
+    // QR no existe
+    void shouldThrowResourceNotFoundExceptionWhenQrCodeDoesNotExist(){}
+
+    // ticket ya usado
+    void shouldReturnFalseWhenTicketHasAlreadyBeenUsedDuringValidation(){}
+
+    // ticket cancela
+    void shouldReturnFalseWhenTicketHasAlreadyBeenCancelledDuringValidation(){}
 
 }
