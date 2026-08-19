@@ -3,11 +3,18 @@ package com.ismael.ticketfu.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @Table(name = "category")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+
 public class Category {
 
     @Id
@@ -20,10 +27,4 @@ public class Category {
 
     @NotBlank(message = "La descripción no puede estar vacía")
     private String description;
-
-    public Category(long l, String conciertos, String músicaEnVivo) {
-    }
-    public Category(){
-
-    }
 }
